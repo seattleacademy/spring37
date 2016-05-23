@@ -1,0 +1,31 @@
+{
+  "name": "node-sense-hat",
+  "version": "0.0.1",
+  "description": "nodejs version of python-sense-hat",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seattleacademy/node-sense-hat.git"
+  },
+  "keywords": [
+    "sense-hat",
+    "raspberry",
+    "pi"
+  ],
+  "author": "Gary Anderson",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/seattleacademy/node-sense-hat/issues"
+  },
+  "homepage": "https://github.com/seattleacademy/node-sense-hat#readme",
+  "dependencies": {
+    "body-parser": "^1.15.1",
+    "express": "^4.13.4",
+    "nodeimu": "^2.1.7",
+    "python-shell": "^0.4.0",
+    "ws": "^1.1.0"
+  }
+}
