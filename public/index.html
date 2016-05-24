@@ -1,32 +1,42 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <style>
-      body {
-        font-family: Tahoma, Geneva, sans-serif;
-      }
 
-      div {
+<head>
+    <style>
+    body {
+        font-family: Tahoma, Geneva, sans-serif;
+    }
+    
+    div {
         display: inline;
-      }
+    }
     </style>
     <script>
-      function updateStats(memuse) {
-        document.getElementById('rss').innerHTML = memuse.rss;
-        document.getElementById('heapTotal').innerHTML = memuse.heapTotal;
-        document.getElementById('heapUsed').innerHTML = memuse.heapUsed;
-      }
-
+    function updateGuages(data) {
+      //console.log(data.counter);
+        odometer1.setValueAnimated(data.counter);
+    }
       var host = window.document.location.host.replace(/:.*/, '');
-      var ws = new WebSocket('ws://' + host + ':8080');
-      ws.onmessage = function (event) {
-        updateStats(JSON.parse(event.data));
-      };
+      var port = window.document.location.port;
+      //port=5001;
+      var ws = new WebSocket('ws://' + host + ':' + port);
+    ws.onmessage = function(event) {
+        updateGuages(JSON.parse(event.data));
+    };
     </script>
-  </head>
-  
-  <body>
-  <a href= "SteelSeries-Canvas/demoExtras.html">demo</a>
-    
-  </body>
+</head>
+
+<body>
+    <canvas id="canvasOdometer1" width="100" height="40"></canvas>
+
+    <script src='http://math.seattleacademy.org/garyanderson/SteelSeries-Canvas/tween-min.js'></script>
+    <script src='http://math.seattleacademy.org/garyanderson/SteelSeries-Canvas/steelseries-min.js'></script>
+    <script>
+    function init() {
+        odometer1 = new steelseries.Odometer('canvasOdometer1', {});
+        odometer1.setValueAnimated(0);
+    }
+    init();
+    </script>
+</body>
 </html>
