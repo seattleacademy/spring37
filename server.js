@@ -1,45 +1,53 @@
- var nodeimu = require('nodeimu');
- var IMU = new nodeimu.IMU();
+var nodeimu = require('nodeimu');
+var IMU = new nodeimu.IMU();
+var WebSocketServer = require('ws').Server;
+var http = require('http');
+var express = require('express');
+var app = express();
 
- var express = require('express');
- var app = express();
- var latestdata = {};
- var counter = 0;
- port = 3000;
+port = 5000;
+var sensors = {};
+counter = 0;
+app.use(express.static(__dirname + '/public'));
 
- function getData() {
-     IMU.getValue(function(err, data) {
-         if (err) throw err;
-         latestdata = data;
-     });
- }
- getData();
- setInterval(getData, 100);
+var server = http.createServer(app);
+server.listen(port);
+console.log('listening on port', port)
 
+function getData() {
+    IMU.getValue(function(err, data) {
+        if (err) throw err;
+        sensors = data;
+        sensors.counter = counter++
+    });
+}
+getData();
+setInterval(getData, 25); //less that 25ms is erratic
 
+app.all('/all', function(req, res) {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.send(JSON.stringify(sensors));
+});
 
- app.use(express.static("./public"))
+app.all('/heading', function(req, res) {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    heading = ((sensors.tiltHeading + Math.PI / 2) * 180 / Math.PI).toFixed(0);
+    res.send(heading.toString());
+});
 
- app.all('/heading', function(req, res) {
-     counter++;
-     res.setHeader("Access-Control-Allow-Origin", "*");
-     heading = (latestdata.tiltHeading + Math.PI / 2) * 180 / Math.PI;
-     res.send(heading.toFixed(0));
-     //res.send(JSON.stringify(latestdata));
- });
+app.all('/counter', function(req, res) {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.send(sensors.counter.toString());
+});
 
- app.all('/all', function(req, res) {
-     counter++;
-     res.setHeader("Access-Control-Allow-Origin", "*");
-     res.send(JSON.stringify(latestdata));
- });
- app.all('/counter', function(req, res) {
-     counter++;
-     res.setHeader("Access-Control-Allow-Origin", "*");
-     res.send(counter.toString());
- });
- app.listen(port, function() {
-     console.log('listening on port', port);
- });
-
- module.exports = app;
+var wss = new WebSocketServer({ server: server });
+wss.on('connection', function(ws) {
+    var id = setInterval(function() {
+        ws.send(JSON.stringify(sensors), function() { /* ignore errors */ });
+    }, 25);
+    console.log('connection to client');
+    ws.on('close', function() {
+        console.log('closing client');
+        clearInterval(id);
+    });
+});

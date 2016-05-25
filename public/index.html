@@ -1,42 +1,59 @@
 <!DOCTYPE html>
 <html>
-
 <head>
+    <meta charset="UTF-8">
+    <title>IMU Guages</title>
     <style>
-    body {
-        font-family: Tahoma, Geneva, sans-serif;
-    }
-    
-    div {
-        display: inline;
-    }
     </style>
-    <script>
-    function updateGuages(data) {
-      //console.log(data.counter);
-        odometer1.setValueAnimated(data.counter);
-    }
-      var host = window.document.location.host.replace(/:.*/, '');
-      var port = window.document.location.port;
-      //port=5001;
-      var ws = new WebSocket('ws://' + host + ':' + port);
-    ws.onmessage = function(event) {
-        updateGuages(JSON.parse(event.data));
-    };
-    </script>
 </head>
 
 <body>
+    <canvas id="horizon" width="201" height="201"></canvas>
+    <canvas id="canvasAltimeter1" width="201" height="201"></canvas>
     <canvas id="canvasOdometer1" width="100" height="40"></canvas>
-
-    <script src='http://math.seattleacademy.org/garyanderson/SteelSeries-Canvas/tween-min.js'></script>
-    <script src='http://math.seattleacademy.org/garyanderson/SteelSeries-Canvas/steelseries-min.js'></script>
+    <div id="pitch">...</div>
+    <div id="roll">...</div>
+    <div id="yaw">...</div>
+    <script src='https://code.jquery.com/jquery-2.2.4.min.js'></script>
+    <script src='http://math.seattleacademy.org/js/guages.js'></script>
     <script>
+    //http://www.srh.noaa.gov/images/epz/wxcalc/pressureAltitude.pdf
+    function mbToPressureAlt(mb) {
+        return (1 - Math.pow(mb / 1013.25, 0.190284)) * 145366.45 + 250
+    }
+
+    function updateGuages(data) {
+        //console.log(JSON.stringify(data, null, 4));
+        odometer1.setValue(data.counter);
+        altimeter1.setValue(mbToPressureAlt(data.pressure));
+        var pitch = data.fusionPose.x * 180 / Math.PI;
+        var roll = data.fusionPose.y * 180 / Math.PI;
+        var yaw = data.fusionPose.z * 180 / Math.PI;
+        horizon1.setPitch(pitch);
+        horizon1.setRoll(roll);
+        $('#pitch').text(pitch.toFixed(3));
+        $('#roll').text(roll.toFixed(3));
+        $('#yaw').text(roll.toFixed(3));
+    }
+    var host = window.document.location.host.replace(/:.*/, '');
+    var port = window.document.location.port;
+    var ws = new WebSocket('ws://' + host + ':' + port);
+    //var ws = new WebSocket('ws://pi5:5001');
+    ws.onmessage = function(event) {
+        updateGuages(JSON.parse(event.data));
+    };
+
     function init() {
+        horizon1 = new steelseries.Horizon('horizon', {
+            size: 201
+        });
+        altimeter1 = new steelseries.Altimeter('canvasAltimeter1', {
+            size: 201
+        });
         odometer1 = new steelseries.Odometer('canvasOdometer1', {});
-        odometer1.setValueAnimated(0);
     }
     init();
     </script>
 </body>
+
 </html>
